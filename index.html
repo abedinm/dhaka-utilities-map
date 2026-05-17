@@ -3,892 +3,1105 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>Dhaka City Utilities Map</title>
+<title>Dhaka City — Utilities & Live Users</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#06060f;
-  --sidebar:#0a0a18;
-  --card:#10101f;
-  --card2:#161628;
-  --border:#1c1c35;
-  --border2:#252545;
-  --text:#dde1f5;
-  --text2:#8890b8;
-  --text3:#484e72;
-  --accent:#38bdf8;
-  --glow:rgba(56,189,248,0.15);
-  --radius:10px;
+  --bg:#04040e;--sb:#07071a;--c1:#0d0d22;--c2:#121230;
+  --bd:#181838;--bd2:#20204a;
+  --tx:#dde1ff;--tx2:#7880b8;--tx3:#363870;
+  --ac:#38bdf8;--gr:#22c55e;--yw:#f59e0b;--re:#ef4444;
 }
-html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+html,body{height:100%;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
 
 /* ── MAP ── */
 #map{position:fixed;inset:0;z-index:1}
-.leaflet-container{background:#06060f}
-.leaflet-control-zoom a{background:#10101f!important;color:#dde1f5!important;border-color:#1c1c35!important}
-.leaflet-control-zoom a:hover{background:#161628!important}
+.leaflet-container{background:#04040e}
+.leaflet-control-zoom{border:none!important;box-shadow:none!important}
+.leaflet-control-zoom a{
+  background:var(--c1)!important;color:var(--tx)!important;
+  border:1px solid var(--bd2)!important;margin-bottom:3px!important;
+  border-radius:8px!important;width:30px!important;height:30px!important;
+  line-height:30px!important;font-size:1rem!important;transition:background .2s!important
+}
+.leaflet-control-zoom a:hover{background:var(--c2)!important}
+.leaflet-control-attribution{
+  background:rgba(4,4,14,.7)!important;color:var(--tx3)!important;font-size:.6rem!important;
+  padding:2px 6px!important;border-radius:4px 0 0 0!important;
+}
+.leaflet-control-attribution a{color:var(--tx2)!important}
 
 /* ── SIDEBAR ── */
-#sidebar{
-  position:fixed;left:0;top:0;bottom:0;width:290px;
-  background:var(--sidebar);
-  border-right:1px solid var(--border);
-  z-index:500;
-  display:flex;flex-direction:column;
-  overflow:hidden;
+#sb{
+  position:fixed;left:0;top:0;bottom:0;width:295px;
+  background:var(--sb);border-right:1px solid var(--bd);
+  z-index:500;display:flex;flex-direction:column;overflow:hidden;
   transition:transform .35s cubic-bezier(.4,0,.2,1);
+  box-shadow:6px 0 32px rgba(0,0,0,.6);
 }
-#sidebar.collapsed{transform:translateX(-290px)}
+#sb.closed{transform:translateX(-295px)}
 
-/* ── SIDEBAR HEADER ── */
-.sb-header{
-  padding:18px 16px 14px;
-  background:linear-gradient(180deg,#0d0d1e 0%,transparent 100%);
-  border-bottom:1px solid var(--border);
-  flex-shrink:0;
+/* header */
+.sbh{
+  padding:15px 15px 12px;flex-shrink:0;
+  border-bottom:1px solid var(--bd);
+  background:linear-gradient(180deg,rgba(56,189,248,.07) 0%,transparent 100%);
 }
-.sb-logo{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.sb-logo-icon{
+.sbh-logo{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sbh-icon{
   width:36px;height:36px;border-radius:10px;
   background:linear-gradient(135deg,#38bdf8,#818cf8);
-  display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;
+  box-shadow:0 0 14px rgba(56,189,248,.45);
 }
-.sb-logo-text{font-size:1rem;font-weight:700;line-height:1.1}
-.sb-logo-sub{font-size:.65rem;color:var(--text2);font-weight:500}
+.sbh-t{font-size:.95rem;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+.sbh-s{font-size:.62rem;color:var(--tx2);font-weight:500}
+.sbh-search{position:relative}
+.sbh-input{
+  width:100%;background:var(--c1);border:1px solid var(--bd2);color:var(--tx);
+  padding:8px 12px 8px 34px;border-radius:8px;font-size:.8rem;
+  outline:none;transition:border-color .2s;font-family:inherit;
+}
+.sbh-input:focus{border-color:var(--ac)}
+.sbh-input::placeholder{color:var(--tx3)}
+.sbh-si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:.85rem;pointer-events:none}
 
-/* Search */
-.sb-search{position:relative}
-.sb-search input{
-  width:100%;background:var(--card);border:1px solid var(--border2);
-  color:var(--text);padding:9px 12px 9px 34px;border-radius:8px;
-  font-size:.82rem;outline:none;transition:border-color .2s;font-family:inherit;
-}
-.sb-search input:focus{border-color:var(--accent)}
-.sb-search input::placeholder{color:var(--text3)}
-.sb-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:.9rem;pointer-events:none}
+/* body scroll */
+.sbb{flex:1;overflow-y:auto;overflow-x:hidden}
+.sbb::-webkit-scrollbar{width:3px}
+.sbb::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
 
-/* ── CATEGORIES SCROLL ── */
-.sb-body{flex:1;overflow-y:auto;padding:10px 0}
-.sb-body::-webkit-scrollbar{width:3px}
-.sb-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-
-.sb-section-title{
-  font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--text3);padding:8px 16px 4px;
+/* voronoi control strip */
+.vctrl{
+  margin:10px 14px 4px;
+  background:linear-gradient(135deg,rgba(56,189,248,.08),rgba(129,140,248,.08));
+  border:1px solid rgba(56,189,248,.2);
+  border-radius:10px;padding:10px 12px;
+}
+.vctrl-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.vctrl-title{font-size:.72rem;font-weight:800;color:var(--ac);flex:1;letter-spacing:.03em}
+.vtoggle{
+  position:relative;width:36px;height:20px;cursor:pointer;
+  background:var(--bd2);border-radius:999px;transition:background .2s;border:none;
+  flex-shrink:0;
+}
+.vtoggle.on{background:var(--ac)}
+.vtoggle::after{
+  content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;
+  border-radius:50%;background:#fff;transition:transform .2s;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);
+}
+.vtoggle.on::after{transform:translateX(16px)}
+.vctrl-label{font-size:.68rem;color:var(--tx2)}
+.vslider{
+  width:100%;accent-color:var(--ac);cursor:pointer;height:4px;
+  background:var(--bd2);border-radius:2px;outline:none;-webkit-appearance:none;
+}
+.vslider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--ac);cursor:pointer;box-shadow:0 0 6px rgba(56,189,248,.5);
 }
 
-.cat-btn{
-  display:flex;align-items:center;gap:10px;
-  width:100%;padding:8px 16px;cursor:pointer;
-  background:none;border:none;color:var(--text);
-  font-family:inherit;text-align:left;
-  transition:background .15s;border-left:3px solid transparent;
+/* section headers */
+.sch{
+  display:flex;align-items:center;gap:8px;padding:10px 15px 5px;
+  cursor:pointer;user-select:none;
 }
-.cat-btn:hover{background:rgba(255,255,255,.04)}
-.cat-btn.active{background:rgba(255,255,255,.06);border-left-color:var(--cat-color)}
-.cat-btn.active .cat-label{color:var(--text)}
-.cat-btn:not(.active) .cat-label{color:var(--text2)}
-.cat-btn:not(.active) .cat-dot{opacity:.35}
+.sch-t{font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);flex:1}
+.sch-n{
+  font-size:.65rem;font-weight:700;background:var(--bd2);
+  color:var(--tx2);padding:2px 7px;border-radius:999px;
+}
+.sch-arr{color:var(--tx3);font-size:.65rem;transition:transform .25s}
+.sch.open .sch-arr{transform:rotate(90deg)}
+.scb{overflow:hidden;transition:max-height .3s ease}
 
-.cat-dot{
-  width:10px;height:10px;border-radius:50%;
-  background:var(--cat-color);flex-shrink:0;
-  box-shadow:0 0 6px var(--cat-color);
-  transition:opacity .2s;
+/* user items */
+.u-bar{display:flex;gap:6px;padding:5px 14px 8px}
+.u-bar-btn{
+  flex:1;padding:6px;border-radius:8px;font-size:.68rem;font-weight:700;
+  cursor:pointer;border:1px solid var(--bd2);background:var(--c1);
+  color:var(--tx2);transition:all .2s;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:4px;
 }
-.cat-label{font-size:.82rem;font-weight:500;flex:1;transition:color .2s}
-.cat-icon{font-size:.9rem;flex-shrink:0;opacity:.7}
-.cat-count{
-  font-size:.7rem;font-weight:700;
-  background:rgba(255,255,255,.08);
-  color:var(--text2);padding:1px 7px;border-radius:999px;
-  min-width:26px;text-align:center;
-}
-.cat-btn.active .cat-count{background:rgba(var(--cat-rgb),.2);color:var(--cat-color)}
+.u-bar-btn:hover{background:var(--c2);color:var(--tx)}
+.u-bar-btn.live{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4);color:var(--gr)}
 
-.sb-ctrl-row{display:flex;gap:6px;padding:8px 16px 4px}
-.sb-ctrl-btn{
-  flex:1;padding:6px;border-radius:7px;font-size:.7rem;font-weight:600;
-  cursor:pointer;border:1px solid var(--border2);background:var(--card);
-  color:var(--text2);transition:all .2s;font-family:inherit;
+.uitem{
+  display:flex;align-items:center;gap:9px;padding:7px 14px;
+  cursor:pointer;transition:background .15s;
 }
-.sb-ctrl-btn:hover{background:var(--card2);color:var(--text)}
+.uitem:hover{background:rgba(255,255,255,.025)}
+.uitem.hidden{opacity:.35}
+.udot-w{position:relative;flex-shrink:0;width:16px;height:16px}
+.udot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.25)}
+.upip{
+  position:absolute;bottom:-2px;right:-2px;
+  width:7px;height:7px;border-radius:50%;border:2px solid var(--sb);
+}
+.upip.online{background:var(--gr)} .upip.away{background:var(--yw)} .upip.offline{background:var(--tx3)}
+.uinfo{flex:1;min-width:0}
+.uname{font-size:.78rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.umeta{font-size:.62rem;color:var(--tx3);margin-top:1px}
+.uaction{
+  width:22px;height:22px;border-radius:6px;background:var(--bd2);border:none;
+  color:var(--tx2);cursor:pointer;font-size:.68rem;display:flex;align-items:center;
+  justify-content:center;transition:all .2s;flex-shrink:0;margin-left:2px;
+}
+.uaction:hover{background:var(--ac);color:#000}
 
-/* ── STATS FOOTER ── */
-.sb-stats{
-  border-top:1px solid var(--border);padding:14px 16px;flex-shrink:0;
-  background:var(--card);
+/* utility categories */
+.cat-ctrl{display:flex;gap:5px;padding:4px 14px 6px}
+.cat-ctrl-b{
+  flex:1;padding:5px;border-radius:7px;font-size:.65rem;font-weight:700;
+  cursor:pointer;border:1px solid var(--bd2);background:var(--c1);
+  color:var(--tx2);transition:all .2s;font-family:inherit;
 }
-.stats-row{display:flex;gap:8px;margin-bottom:10px}
-.stat-box{
-  flex:1;background:var(--card2);border:1px solid var(--border2);
-  border-radius:8px;padding:8px;text-align:center;
+.cat-ctrl-b:hover{background:var(--c2);color:var(--tx)}
+.catrow{
+  display:flex;align-items:center;gap:8px;padding:6px 14px;
+  cursor:pointer;background:none;border:none;color:var(--tx);
+  font-family:inherit;width:100%;text-align:left;
+  transition:background .12s;border-left:3px solid transparent;
 }
-.stat-val{font-size:1.3rem;font-weight:800;color:var(--text);display:block}
-.stat-lbl{font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
-.data-src{font-size:.62rem;color:var(--text3);text-align:center}
-.data-src a{color:var(--text2);text-decoration:none}
+.catrow:hover{background:rgba(255,255,255,.025)}
+.catrow.on{border-left-color:var(--cc);background:rgba(255,255,255,.018)}
+.catrow:not(.on){opacity:.45}
+.cglyph{width:8px;height:8px;border-radius:50%;background:var(--cc);flex-shrink:0;box-shadow:0 0 6px var(--cc)}
+.cemoji{font-size:.82rem;flex-shrink:0}
+.cname{font-size:.78rem;font-weight:500;flex:1}
+.ccnt{
+  font-size:.65rem;font-weight:700;background:rgba(255,255,255,.06);
+  color:var(--tx2);padding:1px 6px;border-radius:999px;min-width:26px;text-align:center;
+}
+.catrow.on .ccnt{background:rgba(var(--ccr),.2);color:var(--cc)}
+
+/* stats footer */
+.sbf{
+  border-top:1px solid var(--bd);padding:11px 14px;flex-shrink:0;
+  background:var(--c1);
+}
+.sfg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.sbox{background:var(--c2);border:1px solid var(--bd2);border-radius:8px;padding:7px;text-align:center}
+.sv{font-size:1.1rem;font-weight:800;color:var(--tx);display:block}
+.sl{font-size:.55rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em}
+.snote{font-size:.58rem;color:var(--tx3);text-align:center}
 
 /* ── TOP BAR ── */
-#topbar{
-  position:fixed;top:0;left:290px;right:0;height:52px;
-  background:rgba(6,6,15,.85);
-  border-bottom:1px solid var(--border);
-  backdrop-filter:blur(12px);
-  z-index:400;
-  display:flex;align-items:center;gap:10px;padding:0 14px;
+#tb{
+  position:fixed;top:0;left:295px;right:0;height:48px;
+  background:rgba(4,4,14,.88);border-bottom:1px solid var(--bd);
+  backdrop-filter:blur(18px);z-index:400;
+  display:flex;align-items:center;gap:7px;padding:0 11px;
   transition:left .35s cubic-bezier(.4,0,.2,1);
 }
-#topbar.full{left:0}
+#tb.full{left:0}
+.tbb{
+  width:32px;height:32px;border-radius:8px;background:var(--c1);
+  border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.9rem;flex-shrink:0;color:var(--tx);transition:background .2s;
+}
+.tbb:hover{background:var(--c2)}
+.tbt{font-weight:800;font-size:.88rem;white-space:nowrap;letter-spacing:-.01em}
+.tbt span{color:var(--ac)}
+.tbsep{width:1px;height:20px;background:var(--bd2);flex-shrink:0}
+.srow{display:flex;gap:3px}
+.sb2{
+  padding:4px 9px;border-radius:7px;font-size:.68rem;font-weight:700;
+  cursor:pointer;border:1px solid var(--bd2);background:var(--c1);
+  color:var(--tx2);transition:all .2s;font-family:inherit;white-space:nowrap;
+}
+.sb2.on{background:rgba(56,189,248,.15);border-color:var(--ac);color:var(--ac)}
+.opill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);
+  border-radius:999px;padding:3px 9px;font-size:.68rem;font-weight:700;color:var(--gr);
+  white-space:nowrap;
+}
+.opip{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:opip 1.5s infinite}
+@keyframes opip{0%,100%{opacity:1}50%{opacity:.25}}
 
-.toggle-btn{
-  width:36px;height:36px;border-radius:9px;
-  background:var(--card);border:1px solid var(--border2);
+/* ── USER MARKERS (div-icon CSS) ── */
+.um{position:relative;width:26px;height:26px;cursor:pointer}
+.um-r1,.um-r2{
+  position:absolute;inset:-5px;border-radius:50%;
+  border:2px solid currentColor;opacity:0;
+  animation:umP 2.4s ease-out infinite;
+}
+.um-r2{animation-delay:1.2s}
+@keyframes umP{0%{transform:scale(1);opacity:.85}100%{transform:scale(2.6);opacity:0}}
+.um.away .um-r1,.um.away .um-r2{animation-duration:5s}
+.um.offline .um-r1,.um.offline .um-r2{display:none}
+.um-core{
+  position:absolute;inset:0;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.9);
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:1rem;flex-shrink:0;
-  transition:background .2s;color:var(--text);
+  box-shadow:0 0 14px currentColor,0 2px 10px rgba(0,0,0,.7);
 }
-.toggle-btn:hover{background:var(--card2)}
-
-.topbar-title{font-weight:700;font-size:.95rem;white-space:nowrap}
-.topbar-title span{color:var(--accent)}
-
-.style-btns{display:flex;gap:4px;margin-left:auto}
-.style-btn{
-  padding:5px 10px;border-radius:7px;font-size:.72rem;font-weight:600;
-  cursor:pointer;border:1px solid var(--border2);background:var(--card);
-  color:var(--text2);transition:all .2s;font-family:inherit;white-space:nowrap;
+.um-lbl{font-size:6px;font-weight:900;color:#fff;letter-spacing:-.2px;line-height:1}
+.um-pip{
+  position:absolute;bottom:-3px;right:-3px;
+  width:9px;height:9px;border-radius:50%;
+  border:2px solid var(--sb);
 }
-.style-btn.active{background:rgba(56,189,248,.15);border-color:var(--accent);color:var(--accent)}
-
-.status-dot{
-  width:7px;height:7px;border-radius:50%;flex-shrink:0;
-  background:#22c55e;box-shadow:0 0 6px #22c55e;
-  margin-left:4px;
-}
-.status-dot.offline{background:#ef4444;box-shadow:0 0 6px #ef4444}
-.status-lbl{font-size:.7rem;color:var(--text2);margin-right:4px}
-
-/* ── LOADING OVERLAY ── */
-#loading{
-  position:fixed;inset:0;z-index:2000;
-  background:rgba(6,6,15,.95);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:16px;
-  transition:opacity .4s;
-}
-#loading.hidden{opacity:0;pointer-events:none}
-.load-logo{font-size:3rem;animation:spin 2s linear infinite}
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.load-title{font-size:1.2rem;font-weight:700}
-.load-sub{font-size:.82rem;color:var(--text2)}
-.load-bar{width:220px;height:4px;background:var(--border2);border-radius:999px;overflow:hidden}
-.load-fill{
-  height:100%;width:0%;
-  background:linear-gradient(90deg,#38bdf8,#818cf8);
-  border-radius:999px;
-  transition:width .4s ease;
-}
-.load-status{font-size:.75rem;color:var(--text3)}
+.um.online .um-pip{background:var(--gr)}
+.um.away   .um-pip{background:var(--yw)}
+.um.offline .um-pip{background:var(--tx3)}
+.um.offline .um-core{opacity:.45}
 
 /* ── POPUP ── */
 .custom-popup .leaflet-popup-content-wrapper{
-  background:var(--card);
-  border:1px solid var(--border2);
-  border-radius:12px;
-  box-shadow:0 8px 32px rgba(0,0,0,.6);
-  padding:0;overflow:hidden;
-  min-width:200px;
+  background:var(--c1);border:1px solid var(--bd2);border-radius:14px;
+  box-shadow:0 16px 48px rgba(0,0,0,.8);padding:0;overflow:hidden;min-width:215px;
 }
 .custom-popup .leaflet-popup-tip-container{display:none}
 .custom-popup .leaflet-popup-content{margin:0;padding:0}
-.popup-inner{padding:14px 16px}
-.popup-type-badge{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:3px 8px;border-radius:999px;
-  font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
-  margin-bottom:8px;
+.ph{padding:12px 14px 9px;border-bottom:1px solid var(--bd)}
+.pbadge{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;
+  font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;
 }
-.popup-name{font-size:.95rem;font-weight:700;margin-bottom:4px;color:var(--text)}
-.popup-detail{font-size:.75rem;color:var(--text2);line-height:1.5}
-.popup-footer{
-  padding:8px 16px;background:var(--card2);
-  font-size:.68rem;color:var(--text3);
-  border-top:1px solid var(--border);
-}
+.pname{font-size:.9rem;font-weight:800;color:var(--tx);margin-bottom:4px}
+.psub{font-size:.7rem;color:var(--tx2);line-height:1.55}
+.pfoot{padding:7px 14px;font-size:.62rem;color:var(--tx3);background:rgba(0,0,0,.3)}
 
-/* ── INFO PANEL ── */
-#info-panel{
-  position:fixed;right:14px;bottom:14px;
-  background:var(--card);border:1px solid var(--border2);
-  border-radius:12px;padding:14px 16px;
-  z-index:400;
-  max-width:230px;
-  display:none;
-  animation:slideUp .3s ease;
-}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* Voronoi cell highlight on hover */
+.leaflet-interactive:focus{outline:none}
 
-/* ── LEGEND MINI ── */
-#mini-legend{
-  position:fixed;right:14px;top:66px;
-  background:rgba(10,10,24,.88);
-  border:1px solid var(--border);
-  border-radius:10px;padding:10px 12px;
-  z-index:400;backdrop-filter:blur(8px);
-  font-size:.7rem;max-height:calc(100vh - 90px);
-  overflow-y:auto;display:none;
+/* ── LEGEND PANEL ── */
+#lgp{
+  position:fixed;right:11px;top:58px;
+  background:rgba(7,7,26,.92);border:1px solid var(--bd2);
+  border-radius:12px;padding:11px 13px;z-index:400;
+  backdrop-filter:blur(14px);font-size:.68rem;
+  max-height:calc(100dvh - 78px);overflow-y:auto;
+  display:none;min-width:155px;
+  box-shadow:0 10px 40px rgba(0,0,0,.7);
 }
-#mini-legend::-webkit-scrollbar{width:2px}
-#mini-legend.show{display:block;animation:fadeIn .2s ease}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.legend-row{display:flex;align-items:center;gap:7px;padding:3px 0;cursor:pointer}
-.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.legend-label{color:var(--text2);font-weight:500;white-space:nowrap}
+#lgp::-webkit-scrollbar{width:2px}
+#lgp::-webkit-scrollbar-thumb{background:var(--bd2)}
+#lgp.show{display:block;animation:lgIn .2s ease}
+@keyframes lgIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.lgt{font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin:7px 0 3px}
+.lgt:first-child{margin-top:0}
+.lgr{display:flex;align-items:center;gap:7px;padding:2.5px 0;cursor:pointer}
+.lgd{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.lgl{color:var(--tx2);white-space:nowrap;font-weight:500}
 
 /* ── TOAST ── */
 #toast{
-  position:fixed;top:62px;left:50%;transform:translateX(-50%);
-  background:var(--card2);border:1px solid var(--border2);
-  border-radius:8px;padding:9px 16px;
-  font-size:.8rem;color:var(--text);
-  z-index:3000;
-  opacity:0;pointer-events:none;
-  transition:opacity .25s;
-  white-space:nowrap;
-  box-shadow:0 4px 16px rgba(0,0,0,.5);
+  position:fixed;top:58px;left:50%;transform:translateX(-50%);
+  background:var(--c2);border:1px solid var(--bd2);border-radius:9px;
+  padding:8px 15px;font-size:.77rem;color:var(--tx);z-index:9000;
+  opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;
+  box-shadow:0 6px 24px rgba(0,0,0,.6);
 }
 #toast.show{opacity:1}
 
+/* ── LOADING ── */
+#ld{
+  position:fixed;inset:0;z-index:2000;background:rgba(4,4,14,.97);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;
+  transition:opacity .5s;
+}
+#ld.out{opacity:0;pointer-events:none}
+.ld-ic{font-size:2.8rem;animation:ldspin 2.5s linear infinite}
+@keyframes ldspin{to{transform:rotate(360deg)}}
+.ld-tt{font-size:1.05rem;font-weight:800}
+.ld-sb{font-size:.76rem;color:var(--tx2)}
+.ld-bar{width:200px;height:3px;background:var(--bd2);border-radius:999px;overflow:hidden}
+.ld-fill{height:100%;width:0;background:linear-gradient(90deg,#38bdf8,#818cf8,#22c55e);border-radius:999px;transition:width .4s ease}
+.ld-msg{font-size:.68rem;color:var(--tx3)}
+
 /* ── RESPONSIVE ── */
 @media(max-width:700px){
-  #sidebar{width:260px}
-  #sidebar.collapsed{transform:translateX(-260px)}
-  #topbar{left:0!important;right:0}
-  #topbar.sb-open{left:0}
-  .topbar-title{display:none}
-  .style-btns{display:none}
-  #mini-legend{right:8px;top:60px}
-  #info-panel{right:8px;bottom:8px;left:8px;max-width:none}
+  #sb{width:270px}#sb.closed{transform:translateX(-270px)}
+  #tb{left:0!important} .srow{display:none}
+  #lgp{right:8px}
 }
 </style>
 </head>
 <body>
 
 <!-- Loading -->
-<div id="loading">
-  <div class="load-logo">🗺️</div>
-  <div class="load-title">Dhaka Utilities Map</div>
-  <div class="load-sub">Fetching live city data…</div>
-  <div class="load-bar"><div class="load-fill" id="load-fill"></div></div>
-  <div class="load-status" id="load-status">Connecting to OpenStreetMap…</div>
+<div id="ld">
+  <div class="ld-ic">🏙️</div>
+  <div class="ld-tt">Dhaka City Map</div>
+  <div class="ld-sb">Fetching live utilities & user data…</div>
+  <div class="ld-bar"><div class="ld-fill" id="ldf"></div></div>
+  <div class="ld-msg" id="ldmsg">Initializing map…</div>
 </div>
-
-<!-- Toast -->
 <div id="toast"></div>
-
-<!-- Sidebar -->
-<div id="sidebar">
-  <div class="sb-header">
-    <div class="sb-logo">
-      <div class="sb-logo-icon">🏙️</div>
-      <div>
-        <div class="sb-logo-text">Dhaka Utilities</div>
-        <div class="sb-logo-sub">Interactive City Map</div>
-      </div>
-    </div>
-    <div class="sb-search">
-      <span class="sb-search-icon">🔍</span>
-      <input type="text" id="search-input" placeholder="Search hospitals, parks…"/>
-    </div>
-  </div>
-
-  <div class="sb-body">
-    <div class="sb-section-title">Utility Categories</div>
-    <div class="sb-ctrl-row">
-      <button class="sb-ctrl-btn" onclick="toggleAll(true)">Show All</button>
-      <button class="sb-ctrl-btn" onclick="toggleAll(false)">Hide All</button>
-    </div>
-    <div id="cat-list"></div>
-
-    <div class="sb-section-title" style="margin-top:6px">Data Summary</div>
-    <div style="padding:0 16px 8px">
-      <div class="stats-row">
-        <div class="stat-box">
-          <span class="stat-val" id="stat-total">—</span>
-          <span class="stat-lbl">Total POIs</span>
-        </div>
-        <div class="stat-box">
-          <span class="stat-val" id="stat-visible">—</span>
-          <span class="stat-lbl">Visible</span>
-        </div>
-        <div class="stat-box">
-          <span class="stat-val" id="stat-cats">—</span>
-          <span class="stat-lbl">Layers</span>
-        </div>
-      </div>
-      <div class="data-src">Data: <a href="https://www.openstreetmap.org" target="_blank">© OpenStreetMap</a> contributors · Overpass API</div>
-    </div>
-  </div>
-</div>
-
-<!-- Top Bar -->
-<div id="topbar">
-  <button class="toggle-btn" id="sb-toggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
-  <div class="topbar-title">🏙️ <span>Dhaka</span> City Utilities</div>
-
-  <div class="style-btns">
-    <button class="style-btn active" onclick="setStyle('dark')">🌑 Dark</button>
-    <button class="style-btn" onclick="setStyle('light')">☀️ Light</button>
-    <button class="style-btn" onclick="setStyle('osm')">🗺️ Street</button>
-  </div>
-
-  <span class="status-lbl" style="margin-left:auto">
-    <span class="status-dot" id="status-dot"></span>
-  </span>
-  <span class="status-lbl" id="status-lbl">Online</span>
-
-  <button class="toggle-btn" onclick="toggleLegend()" title="Toggle legend">📋</button>
-</div>
-
-<!-- Mini Legend -->
-<div id="mini-legend"></div>
-
-<!-- Map -->
 <div id="map"></div>
+<div id="lgp"></div>
 
-<!-- Leaflet JS -->
+<!-- SIDEBAR -->
+<div id="sb">
+  <div class="sbh">
+    <div class="sbh-logo">
+      <div class="sbh-icon">🏙️</div>
+      <div>
+        <div class="sbh-t">Dhaka City Map</div>
+        <div class="sbh-s">Utilities · Users · Voronoi Zones</div>
+      </div>
+    </div>
+    <div class="sbh-search">
+      <span class="sbh-si">🔍</span>
+      <input class="sbh-input" id="search" type="text" placeholder="Search utilities…"/>
+    </div>
+  </div>
+
+  <div class="sbb" id="sbb"></div>
+
+  <div class="sbf">
+    <div class="sfg">
+      <div class="sbox"><span class="sv" id="st-p">—</span><span class="sl">POIs</span></div>
+      <div class="sbox"><span class="sv" id="st-u">12</span><span class="sl">Users</span></div>
+      <div class="sbox"><span class="sv" id="st-l">—</span><span class="sl">Layers</span></div>
+      <div class="sbox"><span class="sv" id="st-on">—</span><span class="sl">Online</span></div>
+    </div>
+    <div class="snote">© OpenStreetMap contributors · Overpass API</div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div id="tb">
+  <button class="tbb" onclick="toggleSB()">☰</button>
+  <div class="tbt">🏙️ <span>Dhaka</span> — Utilities & Users</div>
+  <div class="tbsep"></div>
+  <div class="srow">
+    <button class="sb2 on" onclick="setTile('dark',this)">🌑 Dark</button>
+    <button class="sb2" onclick="setTile('light',this)">☀️ Light</button>
+    <button class="sb2" onclick="setTile('osm',this)">🗺️ Street</button>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+    <div class="opill"><div class="opip"></div><span id="op-txt">— Online</span></div>
+    <button class="tbb" onclick="toggleLegend()" title="Legend">📋</button>
+  </div>
+</div>
+
+<!-- SCRIPTS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-delaunay@6/dist/d3-delaunay.umd.min.js"></script>
 <script>
-// ─────────────────────────────────────────────
-//  UTILITY CATEGORY CONFIG
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG — UTILITY CATEGORIES
+// ═══════════════════════════════════════════════════════════════
 const CATS = [
-  { id:'hospital',   label:'Hospitals',      icon:'🏥', color:'#ff4757', rgb:'255,71,87',   tags:{amenity:'hospital'},        size:8, pulse:true  },
-  { id:'clinic',     label:'Clinics',        icon:'⚕️', color:'#ff6b81', rgb:'255,107,129', tags:{amenity:'clinic'},          size:6, pulse:false },
-  { id:'school',     label:'Schools',        icon:'🏫', color:'#2ed573', rgb:'46,213,115',  tags:{amenity:'school'},          size:6, pulse:false },
-  { id:'university', label:'Universities',   icon:'🎓', color:'#1e90ff', rgb:'30,144,255',  tags:{amenity:'university'},      size:8, pulse:false },
-  { id:'park',       label:'Parks',          icon:'🌳', color:'#7bed9f', rgb:'123,237,159', tags:{leisure:'park'},            size:7, pulse:false },
-  { id:'police',     label:'Police',         icon:'👮', color:'#3742fa', rgb:'55,66,250',   tags:{amenity:'police'},          size:7, pulse:true  },
-  { id:'fire',       label:'Fire Stations',  icon:'🚒', color:'#ff6348', rgb:'255,99,72',   tags:{amenity:'fire_station'},    size:7, pulse:true  },
-  { id:'bank',       label:'Banks & ATMs',   icon:'🏦', color:'#ffa502', rgb:'255,165,2',   tags:{amenity:'bank'},            size:6, pulse:false },
-  { id:'mosque',     label:'Mosques',        icon:'🕌', color:'#a29bfe', rgb:'162,155,254', tags:{amenity:'place_of_worship'},size:5, pulse:false },
-  { id:'fuel',       label:'Fuel Stations',  icon:'⛽', color:'#fd9644', rgb:'253,150,68',  tags:{amenity:'fuel'},            size:6, pulse:false },
-  { id:'pharmacy',   label:'Pharmacies',     icon:'💊', color:'#fd79a8', rgb:'253,121,168', tags:{amenity:'pharmacy'},        size:5, pulse:false },
-  { id:'busstop',    label:'Bus Stops',      icon:'🚌', color:'#00cec9', rgb:'0,206,201',   tags:{highway:'bus_stop'},        size:4, pulse:false },
-  { id:'market',     label:'Markets',        icon:'🛒', color:'#fdcb6e', rgb:'253,203,110', tags:{amenity:'marketplace'},     size:7, pulse:false },
+  {id:'hospital',   label:'Hospitals',     icon:'🏥', color:'#FF5C5C', rgb:'255,92,92',   tag:{amenity:'hospital'},         r:8},
+  {id:'clinic',     label:'Clinics',       icon:'⚕️', color:'#FF8FA3', rgb:'255,143,163', tag:{amenity:'clinic'},           r:5},
+  {id:'school',     label:'Schools',       icon:'🏫', color:'#2ECC71', rgb:'46,204,113',  tag:{amenity:'school'},           r:5},
+  {id:'university', label:'Universities',  icon:'🎓', color:'#3498DB', rgb:'52,152,219',  tag:{amenity:'university'},       r:8},
+  {id:'park',       label:'Parks',         icon:'🌳', color:'#A8E063', rgb:'168,224,99',  tag:{leisure:'park'},             r:6},
+  {id:'police',     label:'Police',        icon:'👮', color:'#5D6EF5', rgb:'93,110,245',  tag:{amenity:'police'},           r:7},
+  {id:'fire',       label:'Fire Stations', icon:'🚒', color:'#FF7043', rgb:'255,112,67',  tag:{amenity:'fire_station'},     r:7},
+  {id:'bank',       label:'Banks & ATMs',  icon:'🏦', color:'#F1C40F', rgb:'241,196,15',  tag:{amenity:'bank'},             r:5},
+  {id:'mosque',     label:'Mosques',       icon:'🕌', color:'#C39BD3', rgb:'195,155,211', tag:{amenity:'place_of_worship'}, r:5},
+  {id:'fuel',       label:'Fuel Stations', icon:'⛽', color:'#E67E22', rgb:'230,126,34',  tag:{amenity:'fuel'},             r:5},
+  {id:'pharmacy',   label:'Pharmacies',    icon:'💊', color:'#F48FB1', rgb:'244,143,177', tag:{amenity:'pharmacy'},         r:5},
+  {id:'busstop',    label:'Bus Stops',     icon:'🚌', color:'#00CEC9', rgb:'0,206,201',   tag:{highway:'bus_stop'},         r:4},
+  {id:'market',     label:'Markets',       icon:'🛒', color:'#F9CA24', rgb:'249,202,36',  tag:{amenity:'marketplace'},      r:7},
 ];
 
-// Map of all amenity → category
-const AMENITY_MAP = {};
-CATS.forEach(c => {
-  const k = Object.keys(c.tags)[0];
-  const v = c.tags[k];
-  AMENITY_MAP[v] = c.id;
-});
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG — 12 LIVE USERS  (vibrant, distinct, colorblind-safe)
+// ═══════════════════════════════════════════════════════════════
+const USERS = [
+  {id:'USR-001', name:'Rafiqul Islam',  role:'Field Agent',  color:'#FF6B6B', lat:23.7806, lng:90.4193, status:'online' },
+  {id:'USR-002', name:'Nasrin Begum',   role:'Inspector',    color:'#00E5FF', lat:23.7466, lng:90.3765, status:'online' },
+  {id:'USR-003', name:'Kamal Hossain', role:'Delivery',     color:'#FFEA00', lat:23.7937, lng:90.4142, status:'away'   },
+  {id:'USR-004', name:'Fatema Khatun', role:'Supervisor',   color:'#76FF03', lat:23.7348, lng:90.4224, status:'online' },
+  {id:'USR-005', name:'Rahim Uddin',   role:'Field Agent',  color:'#FF6D00', lat:23.8136, lng:90.4253, status:'online' },
+  {id:'USR-006', name:'Shirin Akter',  role:'Manager',      color:'#EA80FC', lat:23.7532, lng:90.3748, status:'away'   },
+  {id:'USR-007', name:'Delwar Hossain',role:'Delivery',     color:'#FF4081', lat:23.7284, lng:90.3940, status:'online' },
+  {id:'USR-008', name:'Amena Khanam',  role:'Field Agent',  color:'#00E676', lat:23.7574, lng:90.3892, status:'offline'},
+  {id:'USR-009', name:'Nurul Islam',   role:'Inspector',    color:'#448AFF', lat:23.8734, lng:90.3984, status:'online' },
+  {id:'USR-010', name:'Rokeya Sultana',role:'Supervisor',   color:'#FF6E40', lat:23.7183, lng:90.3875, status:'online' },
+  {id:'USR-011', name:'Anisur Rahman', role:'Field Agent',  color:'#40C4FF', lat:23.7627, lng:90.3787, status:'away'   },
+  {id:'USR-012', name:'Sumaiya Parvin',role:'Delivery',     color:'#CCFF90', lat:23.7803, lng:90.4202, status:'online' },
+];
 
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
 //  STATE
-// ─────────────────────────────────────────────
-const active = {};
-CATS.forEach(c => active[c.id] = true);
+// ═══════════════════════════════════════════════════════════════
+const catActive = {};  CATS.forEach(c => catActive[c.id] = true);
+const catLayers = {};  CATS.forEach(c => catLayers[c.id] = L.layerGroup());
+const catData   = {};  CATS.forEach(c => catData[c.id]   = []);
+const userVis   = {};  USERS.forEach(u => userVis[u.id]  = true);
+const userMks   = {};  // id → Leaflet marker
+const userPaths = {};  // id → L.polyline
+const userHist  = {};  USERS.forEach(u => userHist[u.id] = [[u.lat, u.lng]]);
+const origPos   = {};  USERS.forEach(u => origPos[u.id]  = {lat:u.lat, lng:u.lng});
 
-const layerGroups = {};
-CATS.forEach(c => layerGroups[c.id] = L.layerGroup());
+let simTimer    = null;
+let voronoiOn   = true;
+let voronoiAlpha = 0.13;   // fill opacity
+let voronoiDT   = null;    // debounce timer
+let sbOpen      = true;
 
-const catData = {};   // id → [{name, lat, lng, tags}, ...]
-CATS.forEach(c => catData[c.id] = []);
-
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
 //  MAP INIT
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
 const DHAKA = [23.7806, 90.4193];
-
-const map = L.map('map', {
-  center: DHAKA, zoom: 13,
-  zoomControl: false,
-  attributionControl: false
-});
-
-L.control.zoom({ position: 'bottomright' }).addTo(map);
-L.control.attribution({ position: 'bottomleft', prefix: false })
-  .addTo(map)
-  .setPrefix('<a href="https://leafletjs.com">Leaflet</a> | © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>');
+const map = L.map('map', {center:DHAKA, zoom:13, zoomControl:false, attributionControl:false});
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.control.attribution({position:'bottomleft', prefix:false})
+  .addTo(map).setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
 
 const TILES = {
   dark:  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   osm:   'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
 };
+let tileLayer = L.tileLayer(TILES.dark, {maxZoom:19}).addTo(map);
 
-let currentTile = L.tileLayer(TILES.dark, { maxZoom:19 }).addTo(map);
-
-function setStyle(s) {
-  map.removeLayer(currentTile);
-  currentTile = L.tileLayer(TILES[s], { maxZoom:19 }).addTo(map);
-  currentTile.bringToBack();
-  document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+function setTile(k, btn) {
+  map.removeLayer(tileLayer);
+  tileLayer = L.tileLayer(TILES[k], {maxZoom:19}).addTo(map);
+  tileLayer.bringToBack();
+  document.querySelectorAll('.sb2').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
 }
 
-// Add all layer groups to map
-CATS.forEach(c => layerGroups[c.id].addTo(map));
+// Voronoi layer lives BELOW everything else
+const voronoiLayer = L.layerGroup().addTo(map);
+const userTrailLay = L.layerGroup().addTo(map);
+const userMarkLay  = L.layerGroup().addTo(map);
+CATS.forEach(c => catLayers[c.id].addTo(map));
 
-// ─────────────────────────────────────────────
-//  SIDEBAR RENDER
-// ─────────────────────────────────────────────
-function renderSidebar() {
-  const list = document.getElementById('cat-list');
-  list.innerHTML = CATS.map(c => `
-    <button class="cat-btn active" id="btn-${c.id}"
-      style="--cat-color:${c.color};--cat-rgb:${c.rgb}"
-      onclick="toggleCat('${c.id}')">
-      <span class="cat-dot" id="dot-${c.id}"></span>
-      <span class="cat-icon">${c.icon}</span>
-      <span class="cat-label">${c.label}</span>
-      <span class="cat-count" id="cnt-${c.id}">—</span>
-    </button>
-  `).join('');
-}
+// Dhaka boundary ring
+L.circle(DHAKA, {radius:14500,
+  fillColor:'rgba(56,189,248,0.025)', fillOpacity:1,
+  color:'rgba(56,189,248,0.15)', weight:1, dashArray:'6 5'
+}).addTo(map);
 
-function renderLegend() {
-  const leg = document.getElementById('mini-legend');
-  leg.innerHTML = '<div style="font-size:.65rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Legend</div>'
-    + CATS.map(c => `
-      <div class="legend-row" onclick="toggleCat('${c.id}')">
-        <div class="legend-dot" style="background:${c.color};box-shadow:0 0 5px ${c.color}"></div>
-        <div class="legend-label">${c.icon} ${c.label}</div>
-      </div>
-    `).join('');
-}
+// City centre pin
+L.marker(DHAKA, {icon:L.divIcon({
+  className:'',
+  html:`<div style="width:12px;height:12px;border-radius:50%;background:#38bdf8;
+    border:3px solid rgba(255,255,255,.8);
+    box-shadow:0 0 0 6px rgba(56,189,248,.18),0 0 20px #38bdf8"></div>`,
+  iconSize:[12,12], iconAnchor:[6,6]
+})}).addTo(map)
+  .bindPopup('<div class="ph"><div class="pbadge" style="background:rgba(56,189,248,.15);color:#38bdf8">🏙️ Centre</div><div class="pname">Dhaka City Centre</div><div class="psub">📍 Motijheel, Dhaka</div></div>', {className:'custom-popup'});
 
-// ─────────────────────────────────────────────
-//  MARKER CREATION
-// ─────────────────────────────────────────────
-function createMarker(cat, lat, lng, name, tags) {
-  const m = L.circleMarker([lat, lng], {
-    radius: cat.size,
-    fillColor: cat.color,
-    fillOpacity: 0.88,
-    color: 'rgba(255,255,255,0.6)',
-    weight: 1.5,
+// ═══════════════════════════════════════════════════════════════
+//  VORONOI  —  computed in pixel space, stored as lat/lng polygons
+// ═══════════════════════════════════════════════════════════════
+function recomputeVoronoi() {
+  voronoiLayer.clearLayers();
+  if (!voronoiOn) return;
+
+  const visible = USERS.filter(u => userVis[u.id] && u.status !== 'offline');
+  if (visible.length < 2) return;
+
+  // Work in container pixels; pad beyond viewport so cells don't look clipped
+  const {x: W, y: H} = map.getSize();
+  const PAD = 120;
+
+  const pts = visible.map(u => {
+    const p = map.latLngToContainerPoint([u.lat, u.lng]);
+    return [p.x, p.y];
   });
 
-  const addr = tags['addr:street'] ? `${tags['addr:street']}, Dhaka` : 'Dhaka, Bangladesh';
-  const operator = tags.operator || tags.brand || '';
+  // Use d3-delaunay if available, else skip
+  if (!window.d3Delaunay) return;
 
-  m.bindPopup(`
-    <div class="popup-inner">
-      <div class="popup-type-badge" style="background:rgba(${cat.rgb},.18);color:${cat.color}">
-        ${cat.icon} ${cat.label.replace(/s$/, '')}
-      </div>
-      <div class="popup-name">${name || 'Unnamed'}</div>
-      <div class="popup-detail">
-        ${operator ? `<span>🏢 ${operator}</span><br/>` : ''}
-        📍 ${addr}
-      </div>
-    </div>
-    <div class="popup-footer">Click to search nearby</div>
-  `, { className: 'custom-popup', maxWidth: 260 });
+  const delaunay = d3Delaunay.Delaunay.from(pts);
+  const voronoi  = delaunay.voronoi([-PAD, -PAD, W + PAD, H + PAD]);
 
-  m.on('mouseover', () => m.setStyle({ fillOpacity: 1, radius: cat.size + 2 }));
-  m.on('mouseout',  () => m.setStyle({ fillOpacity: 0.88, radius: cat.size }));
+  visible.forEach((u, i) => {
+    const cell = voronoi.cellPolygon(i);
+    if (!cell || cell.length < 3) return;
 
-  return m;
+    // Convert pixel vertices → geographic coordinates
+    const latLngs = cell.map(([x, y]) => map.containerPointToLatLng(L.point(x, y)));
+
+    const poly = L.polygon(latLngs, {
+      fillColor:   u.color,
+      fillOpacity: voronoiAlpha,
+      color:       u.color,
+      weight:      1.5,
+      opacity:     0.45,
+      dashArray:   null,
+      className:   'v-cell',
+    });
+
+    // Hover brighten
+    poly.on('mouseover', () => {
+      poly.setStyle({fillOpacity: Math.min(voronoiAlpha * 2.8, 0.55), weight: 2.5, opacity: 0.8});
+      poly.bringToFront();
+    });
+    poly.on('mouseout', () => {
+      poly.setStyle({fillOpacity: voronoiAlpha, weight: 1.5, opacity: 0.45});
+    });
+
+    // Click → open user popup
+    poly.on('click', () => {
+      const mk = userMks[u.id];
+      if (mk) { map.flyTo([u.lat, u.lng], Math.max(map.getZoom(), 15), {duration:1}); mk.openPopup(); }
+    });
+
+    poly.bindTooltip(`<b style="color:${u.color}">${u.id}</b><br/>${u.name}<br/><small>${u.role}</small>`, {
+      sticky:true, className:'vtt', opacity:0.92
+    });
+
+    voronoiLayer.addLayer(poly);
+  });
+
+  voronoiLayer.bringToBack();
 }
 
-// ─────────────────────────────────────────────
-//  OVERPASS FETCH
-// ─────────────────────────────────────────────
-// Dhaka bounding box: S, W, N, E
-const BBOX = '23.65,90.30,23.93,90.53';
+// Debounce so pan/zoom doesn't hammer it
+function scheduleVoronoi() {
+  clearTimeout(voronoiDT);
+  voronoiDT = setTimeout(recomputeVoronoi, 160);
+}
+map.on('moveend zoomend', scheduleVoronoi);
 
-const OVERPASS = 'https://overpass-api.de/api/interpreter';
+// ═══════════════════════════════════════════════════════════════
+//  USER MARKERS
+// ═══════════════════════════════════════════════════════════════
+function makeUserIcon(u) {
+  const lbl = u.id.slice(-3);
+  return L.divIcon({
+    className: '',
+    html: `<div class="um ${u.status}" style="color:${u.color}">
+      <div class="um-r1"></div><div class="um-r2"></div>
+      <div class="um-core" style="background:${u.color}">
+        <span class="um-lbl">${lbl}</span>
+      </div>
+      <div class="um-pip"></div>
+    </div>`,
+    iconSize:[26,26], iconAnchor:[13,13],
+  });
+}
 
-// Single combined query for all cats
-const OVERPASS_QUERY = `
-[out:json][timeout:60];
-(
-  node["amenity"~"hospital|clinic|school|university|police|fire_station|bank|place_of_worship|fuel|pharmacy|marketplace"](${BBOX});
-  way["amenity"~"hospital|clinic|school|university|police|fire_station|bank|place_of_worship|fuel|pharmacy|marketplace"](${BBOX});
-  node["leisure"="park"](${BBOX});
-  way["leisure"="park"](${BBOX});
-  node["highway"="bus_stop"](${BBOX});
-);
-out center;
-`.trim();
+function makeUserPopup(u) {
+  const sColor = {online:getComputedStyle(document.documentElement).getPropertyValue('--gr')||'#22c55e',
+                  away:'#f59e0b', offline:'#6b7280'};
+  const sEmoji = {online:'🟢', away:'🟡', offline:'⚫'};
+  return `<div class="ph">
+    <div class="pbadge" style="background:${u.color}22;color:${u.color}">👤 ${u.id}</div>
+    <div class="pname">${u.name}</div>
+    <div class="psub">
+      ${sEmoji[u.status]} ${u.status.charAt(0).toUpperCase()+u.status.slice(1)} · ${u.role}<br/>
+      📍 ${u.lat.toFixed(4)}°N, ${u.lng.toFixed(4)}°E
+    </div>
+  </div>
+  <div class="pfoot">Click Voronoi zone to navigate · 🎯 fly-to in sidebar</div>`;
+}
 
-// Category resolver
-function resolveCat(tags) {
+function placeAllUserMarkers() {
+  userMarkLay.clearLayers();
+  userTrailLay.clearLayers();
+  Object.keys(userPaths).forEach(id => delete userPaths[id]);
+
+  USERS.forEach(u => {
+    if (!userVis[u.id]) return;
+    const mk = L.marker([u.lat, u.lng], {
+      icon: makeUserIcon(u),
+      zIndexOffset: 1200,
+    });
+    mk.bindPopup(makeUserPopup(u), {className:'custom-popup', maxWidth:265});
+    userMks[u.id] = mk;
+    userMarkLay.addLayer(mk);
+
+    // Trail
+    drawTrail(u);
+  });
+}
+
+function drawTrail(u) {
+  if (userPaths[u.id]) userTrailLay.removeLayer(userPaths[u.id]);
+  const hist = userHist[u.id];
+  if (hist.length < 2 || u.status === 'offline') return;
+  const trail = L.polyline(hist.slice(-10), {
+    color: u.color, weight: 1.8, opacity: 0.35, dashArray: '3 6'
+  });
+  userTrailLay.addLayer(trail);
+  userPaths[u.id] = trail;
+}
+
+function refreshUserMarker(u) {
+  const mk = userMks[u.id];
+  if (!mk) return;
+  mk.setLatLng([u.lat, u.lng]);
+  mk.setIcon(makeUserIcon(u));
+  mk.setPopupContent(makeUserPopup(u));
+  drawTrail(u);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SIMULATION
+// ═══════════════════════════════════════════════════════════════
+function startSim() {
+  if (simTimer) return;
+  simTimer = setInterval(() => {
+    USERS.forEach(u => {
+      if (u.status === 'offline') return;
+      const spd = u.status === 'online' ? 0.0028 : 0.0012;
+      u.lat = Math.max(23.66, Math.min(23.93, u.lat + (Math.random()-.5)*spd));
+      u.lng = Math.max(90.29, Math.min(90.54, u.lng + (Math.random()-.5)*spd));
+      userHist[u.id].push([u.lat, u.lng]);
+      if (userHist[u.id].length > 22) userHist[u.id].shift();
+      refreshUserMarker(u);
+    });
+    scheduleVoronoi();
+    updateUserRows();
+  }, 1800);
+  document.getElementById('simb').textContent = '⏸ Pause';
+  document.getElementById('simb').classList.add('live');
+  showToast('🔴 Simulation live — users moving every 1.8s');
+}
+
+function stopSim() {
+  clearInterval(simTimer); simTimer = null;
+  document.getElementById('simb').textContent = '▶ Simulate';
+  document.getElementById('simb').classList.remove('live');
+  showToast('⏸ Paused');
+}
+
+function toggleSim() { simTimer ? stopSim() : startSim(); }
+
+function resetPositions() {
+  stopSim();
+  USERS.forEach(u => {
+    u.lat = origPos[u.id].lat; u.lng = origPos[u.id].lng;
+    userHist[u.id] = [[u.lat, u.lng]];
+    refreshUserMarker(u);
+  });
+  recomputeVoronoi();
+  updateUserRows();
+  showToast('↺ Positions reset');
+}
+
+function flyToUser(id) {
+  const u = USERS.find(x => x.id === id);
+  if (!u) return;
+  map.flyTo([u.lat, u.lng], Math.max(map.getZoom(), 16), {duration:1.2});
+  setTimeout(() => userMks[id]?.openPopup(), 1300);
+}
+
+function toggleUser(id) {
+  userVis[id] = !userVis[id];
+  placeAllUserMarkers();
+  recomputeVoronoi();
+  updateUserRows();
+  updateStats();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SIDEBAR RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderSidebar() {
+  document.getElementById('sbb').innerHTML = `
+
+  <!-- VORONOI CONTROLS -->
+  <div class="vctrl">
+    <div class="vctrl-row">
+      <span class="vctrl-title">⬡ Voronoi Zones</span>
+      <button class="vtoggle on" id="vtoggle" onclick="toggleVoronoi(this)" title="Toggle Voronoi"></button>
+    </div>
+    <div class="vctrl-row">
+      <span class="vctrl-label">Opacity</span>
+      <input class="vslider" id="vslider" type="range" min="2" max="40" value="13"
+        oninput="setVoronoiAlpha(this.value)" style="flex:1;margin:0 8px"/>
+      <span class="vctrl-label" id="valpha">13%</span>
+    </div>
+  </div>
+
+  <!-- USERS SECTION -->
+  <div class="sch open" onclick="toggleSec(this)">
+    <span class="sch-t">Live Users</span>
+    <span class="sch-n" id="sn-users">${USERS.filter(u=>u.status==='online').length} online</span>
+    <span class="sch-arr">▶</span>
+  </div>
+  <div class="scb" style="max-height:9999px" id="sec-users">
+    <div class="u-bar">
+      <button class="u-bar-btn" id="simb" onclick="toggleSim()">▶ Simulate</button>
+      <button class="u-bar-btn" onclick="resetPositions()">↺ Reset</button>
+    </div>
+    ${USERS.map(u => `
+    <div class="uitem ${userVis[u.id]?'':'hidden'}" id="ui-${u.id}">
+      <div class="udot-w">
+        <div class="udot" style="background:${u.color};box-shadow:0 0 7px ${u.color}88"></div>
+        <div class="upip ${u.status}"></div>
+      </div>
+      <div class="uinfo">
+        <div class="uname">${u.name}</div>
+        <div class="umeta">${u.id} · ${u.role}</div>
+      </div>
+      <button class="uaction" onclick="flyToUser('${u.id}')" title="Fly to">🎯</button>
+      <button class="uaction" onclick="toggleUser('${u.id}')" title="Toggle"
+        style="background:${userVis[u.id]?'var(--bd2)':'rgba(239,68,68,.18)'}"
+      >${userVis[u.id]?'👁':'🚫'}</button>
+    </div>`).join('')}
+  </div>
+
+  <!-- UTILITIES SECTION -->
+  <div class="sch open" onclick="toggleSec(this)" style="margin-top:6px">
+    <span class="sch-t">Utility Layers</span>
+    <span class="sch-n">${CATS.length} layers</span>
+    <span class="sch-arr">▶</span>
+  </div>
+  <div class="scb" style="max-height:9999px" id="sec-cats">
+    <div class="cat-ctrl">
+      <button class="cat-ctrl-b" onclick="toggleAll(true)">Show All</button>
+      <button class="cat-ctrl-b" onclick="toggleAll(false)">Hide All</button>
+    </div>
+    ${CATS.map(c => `
+    <button class="catrow on" id="cr-${c.id}"
+      style="--cc:${c.color};--ccr:${c.rgb}"
+      onclick="toggleCat('${c.id}')">
+      <div class="cglyph"></div>
+      <span class="cemoji">${c.icon}</span>
+      <span class="cname">${c.label}</span>
+      <span class="ccnt" id="cn-${c.id}">—</span>
+    </button>`).join('')}
+  </div>
+  `;
+}
+
+function updateUserRows() {
+  USERS.forEach(u => {
+    const el = document.getElementById('ui-'+u.id);
+    if (!el) return;
+    el.className = 'uitem' + (userVis[u.id] ? '' : ' hidden');
+  });
+  updateStats();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION COLLAPSE
+// ═══════════════════════════════════════════════════════════════
+function toggleSec(hdr) {
+  hdr.classList.toggle('open');
+  const body = hdr.nextElementSibling;
+  body.style.maxHeight = hdr.classList.contains('open') ? '9999px' : '0';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VORONOI CONTROLS
+// ═══════════════════════════════════════════════════════════════
+function toggleVoronoi(btn) {
+  voronoiOn = !voronoiOn;
+  btn.classList.toggle('on', voronoiOn);
+  recomputeVoronoi();
+  showToast(voronoiOn ? '⬡ Voronoi zones enabled' : '⬡ Voronoi zones hidden');
+}
+
+function setVoronoiAlpha(v) {
+  voronoiAlpha = v / 100;
+  document.getElementById('valpha').textContent = v + '%';
+  recomputeVoronoi();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LEGEND
+// ═══════════════════════════════════════════════════════════════
+function renderLegend() {
+  document.getElementById('lgp').innerHTML =
+    '<div class="lgt">Live Users</div>' +
+    USERS.map(u => `<div class="lgr"><div class="lgd" style="background:${u.color};box-shadow:0 0 5px ${u.color}"></div><div class="lgl">${u.id}</div></div>`).join('') +
+    '<div class="lgt">Utilities</div>' +
+    CATS.map(c => `<div class="lgr"><div class="lgd" style="background:${c.color};box-shadow:0 0 4px ${c.color}"></div><div class="lgl">${c.icon} ${c.label}</div></div>`).join('');
+}
+function toggleLegend() { document.getElementById('lgp').classList.toggle('show'); }
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILITY MARKER RENDERING
+// ═══════════════════════════════════════════════════════════════
+function catFromTags(tags) {
   if (tags.amenity) {
-    const mid = AMENITY_MAP[tags.amenity];
-    if (mid) {
-      if (mid === 'mosque' && tags.religion && tags.religion !== 'muslim') return null;
-      return mid;
+    for (const c of CATS) {
+      if (c.tag.amenity === tags.amenity) {
+        if (c.id === 'mosque' && tags.religion && tags.religion !== 'muslim') return null;
+        return c;
+      }
     }
   }
-  if (tags.leisure === 'park') return 'park';
-  if (tags.highway === 'bus_stop') return 'busstop';
+  if (tags.leisure === 'park')    return CATS.find(x => x.id === 'park');
+  if (tags.highway === 'bus_stop') return CATS.find(x => x.id === 'busstop');
   return null;
 }
 
-function getName(tags) {
-  return tags.name || tags['name:en'] || tags['name:bn'] || null;
+function makeUtilMarker(c, lat, lng, name, tags) {
+  const addr = tags['addr:street'] ? tags['addr:street']+', Dhaka' : 'Dhaka, Bangladesh';
+  const op   = tags.operator || tags.brand || '';
+  const m = L.circleMarker([lat, lng], {
+    radius: c.r, fillColor: c.color, fillOpacity: .85,
+    color: 'rgba(255,255,255,.45)', weight: 1.5,
+  });
+  m.bindPopup(`
+    <div class="ph">
+      <div class="pbadge" style="background:rgba(${c.rgb},.18);color:${c.color}">${c.icon} ${c.label.replace(/s$/,'')}</div>
+      <div class="pname">${name || 'Unnamed'}</div>
+      <div class="psub">${op ? `🏢 ${op}<br/>` : ''}📍 ${addr}</div>
+    </div>
+    <div class="pfoot">OpenStreetMap data</div>
+  `, {className:'custom-popup', maxWidth:265});
+  m.on('mouseover', () => m.setStyle({fillOpacity:1, radius:c.r+2}));
+  m.on('mouseout',  () => m.setStyle({fillOpacity:.85, radius:c.r}));
+  return m;
 }
 
-async function fetchData() {
-  setProgress(10, 'Sending query to Overpass API…');
-
-  try {
-    const res = await fetch(OVERPASS, {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(OVERPASS_QUERY),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-
-    setProgress(60, 'Processing map data…');
-    const json = await res.json();
-
-    setProgress(80, 'Rendering markers…');
-    processElements(json.elements);
-
-    setProgress(100, 'Done!');
-    setTimeout(hideLoading, 600);
-
-  } catch (err) {
-    console.warn('Overpass failed, loading fallback data:', err);
-    setProgress(70, 'API unavailable — loading sample data…');
-    loadFallback();
-    setTimeout(hideLoading, 1000);
-  }
-}
-
-function processElements(elements) {
-  elements.forEach(el => {
+function processElements(els) {
+  els.forEach(el => {
     const tags = el.tags || {};
-    const catId = resolveCat(tags);
-    if (!catId) return;
-
+    const c    = catFromTags(tags);
+    if (!c) return;
     const lat = el.lat ?? el.center?.lat;
     const lng = el.lon ?? el.center?.lon;
     if (!lat || !lng) return;
-
-    const name = getName(tags) || catId.charAt(0).toUpperCase() + catId.slice(1);
-    const cat = CATS.find(c => c.id === catId);
-    if (!cat) return;
-
-    catData[catId].push({ name, lat, lng, tags });
-    const marker = createMarker(cat, lat, lng, name, tags);
-    layerGroups[catId].addLayer(marker);
+    const name = tags.name || tags['name:en'] || tags['name:bn'] || c.label.replace(/s$/,'');
+    catData[c.id].push({name, lat, lng});
+    catLayers[c.id].addLayer(makeUtilMarker(c, lat, lng, name, tags));
   });
-
-  updateStats();
   updateCounts();
+  updateStats();
 }
 
-// ─────────────────────────────────────────────
-//  FALLBACK DATA (when API unavailable)
-// ─────────────────────────────────────────────
-const FALLBACK = [
-  // Hospitals
-  {catId:'hospital', name:'Dhaka Medical College Hospital',     lat:23.7226, lng:90.3970},
-  {catId:'hospital', name:'Bangabandhu Sheikh Mujib Medical',   lat:23.7349, lng:90.3965},
-  {catId:'hospital', name:'Shaheed Suhrawardy Medical College', lat:23.7680, lng:90.3736},
-  {catId:'hospital', name:'Birdem General Hospital',            lat:23.7389, lng:90.3985},
-  {catId:'hospital', name:'United Hospital',                    lat:23.7945, lng:90.4142},
-  {catId:'hospital', name:'Square Hospital',                    lat:23.7516, lng:90.3844},
-  {catId:'hospital', name:'Popular Medical Centre',             lat:23.7472, lng:90.3749},
-  {catId:'hospital', name:'Ibn Sina Hospital Dhanmondi',        lat:23.7406, lng:90.3748},
-  // Universities
-  {catId:'university', name:'Dhaka University',                 lat:23.7284, lng:90.3940},
-  {catId:'university', name:'BUET',                             lat:23.7261, lng:90.3925},
-  {catId:'university', name:'BRAC University',                  lat:23.7780, lng:90.4063},
-  {catId:'university', name:'North South University',           lat:23.8136, lng:90.4253},
-  {catId:'university', name:'AIUB',                             lat:23.8081, lng:90.4283},
-  {catId:'university', name:'Jahangirnagar University',         lat:23.8819, lng:90.2674},
-  {catId:'university', name:'RUET — Rajshahi (outskirts)',      lat:23.7532, lng:90.3748},
-  // Schools
-  {catId:'school', name:'Viqarunnisa Noon School',              lat:23.7465, lng:90.3887},
-  {catId:'school', name:'Holy Cross School',                    lat:23.7285, lng:90.4186},
-  {catId:'school', name:'Motijheel Model School',               lat:23.7347, lng:90.4238},
-  {catId:'school', name:'Residential Model School Mohakhali',   lat:23.7786, lng:90.4066},
-  {catId:'school', name:'Ideal School & College',               lat:23.7348, lng:90.4224},
-  {catId:'school', name:'Government Laboratory School',         lat:23.7264, lng:90.3962},
-  // Parks
-  {catId:'park', name:'Ramna Park',                             lat:23.7352, lng:90.4003},
-  {catId:'park', name:'Suhrawardy Udyan',                       lat:23.7321, lng:90.3975},
-  {catId:'park', name:'Botanical Garden Mirpur',                lat:23.7937, lng:90.3567},
-  {catId:'park', name:'Chandrima Udyan',                        lat:23.7592, lng:90.3703},
-  {catId:'park', name:'Gulshan Lake Park',                      lat:23.7897, lng:90.4187},
-  {catId:'park', name:'Hatirjheel Wetland',                     lat:23.7572, lng:90.4109},
-  // Police
-  {catId:'police', name:'DMP Headquarters',                     lat:23.7289, lng:90.4231},
-  {catId:'police', name:'Gulshan Police Station',               lat:23.7803, lng:90.4202},
-  {catId:'police', name:'Dhanmondi Police Station',             lat:23.7466, lng:90.3714},
-  {catId:'police', name:'Motijheel Police Station',             lat:23.7348, lng:90.4253},
-  {catId:'police', name:'Uttara Police Station',                lat:23.8734, lng:90.3984},
-  // Fire stations
-  {catId:'fire', name:'Siddeswari Fire Station',                lat:23.7465, lng:90.4065},
-  {catId:'fire', name:'Mirpur Fire Station',                    lat:23.8047, lng:90.3574},
-  {catId:'fire', name:'Demra Fire Station',                     lat:23.7148, lng:90.4728},
-  // Banks
-  {catId:'bank', name:'Bangladesh Bank HQ',                     lat:23.7284, lng:90.4200},
-  {catId:'bank', name:'Sonali Bank Motijheel',                  lat:23.7332, lng:90.4210},
-  {catId:'bank', name:'Dutch-Bangla Bank Gulshan',              lat:23.7892, lng:90.4145},
-  {catId:'bank', name:'Brac Bank Dhanmondi',                    lat:23.7466, lng:90.3765},
-  {catId:'bank', name:'Islami Bank Dhanmondi',                  lat:23.7502, lng:90.3750},
-  // Mosques
-  {catId:'mosque', name:'Baitul Mukarram National Mosque',      lat:23.7278, lng:90.4176},
-  {catId:'mosque', name:'Tara Masjid',                          lat:23.7102, lng:90.4063},
-  {catId:'mosque', name:'Khan Mohammad Mridha Mosque',          lat:23.7091, lng:90.3881},
-  {catId:'mosque', name:'Star Mosque',                          lat:23.7119, lng:90.4063},
-  {catId:'mosque', name:'Gulshan Aziz Mosque',                  lat:23.7856, lng:90.4148},
-  // Fuel
-  {catId:'fuel', name:'Padma Oil — Farmgate',                   lat:23.7560, lng:90.3891},
-  {catId:'fuel', name:'Meghna Petro — Dhanmondi',              lat:23.7428, lng:90.3760},
-  {catId:'fuel', name:'Jamuna Oil — Mirpur',                    lat:23.8064, lng:90.3611},
-  {catId:'fuel', name:'Rupantarita Prakritik Gas — Uttara',     lat:23.8750, lng:90.3940},
-  // Pharmacies
-  {catId:'pharmacy', name:'Lazz Pharma Farmgate',               lat:23.7575, lng:90.3904},
-  {catId:'pharmacy', name:'Neon Pharmacy Dhanmondi',            lat:23.7477, lng:90.3759},
-  {catId:'pharmacy', name:'Dr. Debaraj Pharmacy Gulshan',       lat:23.7833, lng:90.4168},
-  {catId:'pharmacy', name:'Popular Pharmacy Motijheel',         lat:23.7334, lng:90.4231},
-  // Markets
-  {catId:'market', name:'New Market Dhaka',                     lat:23.7337, lng:90.3847},
-  {catId:'market', name:'Karwan Bazar',                         lat:23.7536, lng:90.3935},
-  {catId:'market', name:'Mirpur DOHS Market',                   lat:23.8139, lng:90.3613},
-  {catId:'market', name:'Bashundhara City Shopping',            lat:23.7507, lng:90.3897},
-  {catId:'market', name:'Jamuna Future Park',                   lat:23.8143, lng:90.4261},
-  {catId:'market', name:'Elephant Road Market',                 lat:23.7415, lng:90.3934},
-  // Bus Stops
-  {catId:'busstop', name:'Farmgate Bus Stop',                   lat:23.7574, lng:90.3892},
-  {catId:'busstop', name:'Gulistan Bus Terminal',               lat:23.7255, lng:90.4165},
-  {catId:'busstop', name:'Mohakhali Bus Terminal',              lat:23.7799, lng:90.4014},
-  {catId:'busstop', name:'Gabtali Bus Terminal',                lat:23.7645, lng:90.3435},
-  {catId:'busstop', name:'Sayedabad Bus Terminal',              lat:23.7163, lng:90.4313},
-  {catId:'busstop', name:'Mirpur-10 Bus Stop',                  lat:23.8070, lng:90.3668},
+// ═══════════════════════════════════════════════════════════════
+//  FILTERS
+// ═══════════════════════════════════════════════════════════════
+function toggleCat(id) {
+  catActive[id] = !catActive[id];
+  const btn = document.getElementById('cr-'+id);
+  catActive[id] ? catLayers[id].addTo(map) : map.removeLayer(catLayers[id]);
+  btn?.classList.toggle('on', catActive[id]);
+  updateStats();
+}
+function toggleAll(on) {
+  CATS.forEach(c => {
+    catActive[c.id] = on;
+    on ? catLayers[c.id].addTo(map) : map.removeLayer(catLayers[c.id]);
+    document.getElementById('cr-'+c.id)?.classList.toggle('on', on);
+  });
+  updateStats();
+}
+
+document.getElementById('search').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  CATS.forEach(c => {
+    catLayers[c.id].eachLayer(m => {
+      const txt = m.getPopup()?.getContent() || '';
+      const hit = !q || txt.toLowerCase().includes(q);
+      const cat = CATS.find(x => x.id === c.id);
+      m.setStyle({fillOpacity: hit ? .88 : .08, radius: hit ? cat.r : Math.max(cat.r-2,2)});
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════════════════
+function updateCounts() {
+  CATS.forEach(c => {
+    const el = document.getElementById('cn-'+c.id);
+    if (el) el.textContent = catData[c.id].length || 0;
+  });
+}
+function updateStats() {
+  let pois=0, layers=0;
+  CATS.forEach(c => { pois += catData[c.id].length; if (catActive[c.id]) layers++; });
+  const onl = USERS.filter(u => u.status==='online' && userVis[u.id]).length;
+  animN('st-p',  pois);
+  animN('st-l',  layers);
+  animN('st-u',  USERS.filter(u => userVis[u.id]).length);
+  animN('st-on', onl);
+  document.getElementById('op-txt').textContent = `${onl} Online`;
+  const sn = document.getElementById('sn-users');
+  if (sn) sn.textContent = `${USERS.filter(u=>u.status==='online').length} online`;
+}
+function animN(id, to) {
+  const el = document.getElementById(id); if (!el) return;
+  const from = parseInt(el.textContent) || 0;
+  let t = 0;
+  const ti = setInterval(() => {
+    t += 20; el.textContent = Math.round(from + (to-from) * Math.min(t/600, 1));
+    if (t >= 600) clearInterval(ti);
+  }, 20);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UI CONTROLS
+// ═══════════════════════════════════════════════════════════════
+function toggleSB() {
+  sbOpen = !sbOpen;
+  document.getElementById('sb').classList.toggle('closed', !sbOpen);
+  document.getElementById('tb').classList.toggle('full',   !sbOpen);
+}
+
+let toastTmr;
+function showToast(msg, ms=3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOADING HELPERS
+// ═══════════════════════════════════════════════════════════════
+function setProgress(pct, msg) {
+  document.getElementById('ldf').style.width = pct + '%';
+  document.getElementById('ldmsg').textContent = msg;
+}
+function hideLoading() {
+  const el = document.getElementById('ld');
+  el.classList.add('out');
+  setTimeout(() => el.remove(), 600);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  OVERPASS FETCH
+// ═══════════════════════════════════════════════════════════════
+const BBOX = '23.65,90.29,23.93,90.54';
+const OPQ = `[out:json][timeout:60];
+(node["amenity"~"hospital|clinic|school|university|police|fire_station|bank|place_of_worship|fuel|pharmacy|marketplace"](${BBOX});
+ way["amenity"~"hospital|clinic|school|university|police|fire_station|bank|place_of_worship|fuel|pharmacy|marketplace"](${BBOX});
+ node["leisure"="park"](${BBOX}); way["leisure"="park"](${BBOX});
+ node["highway"="bus_stop"](${BBOX});
+);out center;`;
+
+async function fetchData() {
+  setProgress(15, 'Querying Overpass API for Dhaka…');
+  try {
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
+      method:'POST', body:'data='+encodeURIComponent(OPQ),
+      headers:{'Content-Type':'application/x-www-form-urlencoded'}
+    });
+    if (!res.ok) throw new Error();
+    setProgress(65, 'Processing OSM data…');
+    const j = await res.json();
+    setProgress(88, 'Rendering markers…');
+    processElements(j.elements);
+    setProgress(100, 'Done!');
+    setTimeout(hideLoading, 500);
+    const total = Object.values(catData).reduce((a,b) => a+b.length, 0);
+    showToast(`✅ Loaded ${total} POIs from OpenStreetMap`);
+  } catch(e) {
+    setProgress(72, 'API unavailable — using built-in data…');
+    loadFallback();
+    setTimeout(hideLoading, 800);
+    showToast('⚠️ Offline fallback data loaded');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FALLBACK DATASET
+// ═══════════════════════════════════════════════════════════════
+const FB = [
+  {id:'hospital', name:'Dhaka Medical College Hospital',    lat:23.7226,lng:90.3970},
+  {id:'hospital', name:'Bangabandhu Sheikh Mujib Medical',  lat:23.7349,lng:90.3965},
+  {id:'hospital', name:'Shaheed Suhrawardy Medical College',lat:23.7680,lng:90.3736},
+  {id:'hospital', name:'Birdem General Hospital',           lat:23.7389,lng:90.3985},
+  {id:'hospital', name:'United Hospital Gulshan',           lat:23.7945,lng:90.4142},
+  {id:'hospital', name:'Square Hospital Panthapath',        lat:23.7516,lng:90.3844},
+  {id:'hospital', name:'Ibn Sina Hospital Dhanmondi',       lat:23.7406,lng:90.3748},
+  {id:'hospital', name:'Anwer Khan Modern Hospital',        lat:23.7410,lng:90.3720},
+  {id:'clinic',   name:'Lab Aid Specialized Hospital',      lat:23.7450,lng:90.3740},
+  {id:'clinic',   name:'Popular Diagnostic Centre',         lat:23.7490,lng:90.3780},
+  {id:'university',name:'Dhaka University',                 lat:23.7284,lng:90.3940},
+  {id:'university',name:'BUET',                             lat:23.7261,lng:90.3925},
+  {id:'university',name:'BRAC University',                  lat:23.7780,lng:90.4063},
+  {id:'university',name:'North South University',           lat:23.8136,lng:90.4253},
+  {id:'university',name:'AIUB',                             lat:23.8081,lng:90.4283},
+  {id:'university',name:'East West University',             lat:23.7560,lng:90.4120},
+  {id:'school',   name:'Viqarunnisa Noon School',           lat:23.7465,lng:90.3887},
+  {id:'school',   name:'Holy Cross School',                 lat:23.7285,lng:90.4186},
+  {id:'school',   name:'Motijheel Model School',            lat:23.7347,lng:90.4238},
+  {id:'school',   name:'Residential Model School',          lat:23.7786,lng:90.4066},
+  {id:'school',   name:'Ideal School & College',            lat:23.7348,lng:90.4224},
+  {id:'school',   name:'Government Laboratory School',      lat:23.7264,lng:90.3962},
+  {id:'park',     name:'Ramna Park',                        lat:23.7352,lng:90.4003},
+  {id:'park',     name:'Suhrawardy Udyan',                  lat:23.7321,lng:90.3975},
+  {id:'park',     name:'Botanical Garden Mirpur',           lat:23.7937,lng:90.3567},
+  {id:'park',     name:'Chandrima Udyan',                   lat:23.7592,lng:90.3703},
+  {id:'park',     name:'Gulshan Lake Park',                 lat:23.7897,lng:90.4187},
+  {id:'park',     name:'Hatirjheel Wetland Park',           lat:23.7572,lng:90.4109},
+  {id:'police',   name:'DMP Headquarters',                  lat:23.7289,lng:90.4231},
+  {id:'police',   name:'Gulshan Police Station',            lat:23.7803,lng:90.4202},
+  {id:'police',   name:'Dhanmondi Police Station',          lat:23.7466,lng:90.3714},
+  {id:'police',   name:'Motijheel Police Station',          lat:23.7348,lng:90.4253},
+  {id:'police',   name:'Uttara Police Station',             lat:23.8734,lng:90.3984},
+  {id:'fire',     name:'Siddeswari Fire Station',           lat:23.7465,lng:90.4065},
+  {id:'fire',     name:'Mirpur Fire Station',               lat:23.8047,lng:90.3574},
+  {id:'fire',     name:'Demra Fire Station',                lat:23.7148,lng:90.4728},
+  {id:'bank',     name:'Bangladesh Bank HQ',                lat:23.7284,lng:90.4200},
+  {id:'bank',     name:'Sonali Bank Motijheel',             lat:23.7332,lng:90.4210},
+  {id:'bank',     name:'Dutch-Bangla Bank Gulshan',         lat:23.7892,lng:90.4145},
+  {id:'bank',     name:'Brac Bank Dhanmondi',               lat:23.7466,lng:90.3765},
+  {id:'mosque',   name:'Baitul Mukarram National Mosque',   lat:23.7278,lng:90.4176},
+  {id:'mosque',   name:'Tara Masjid',                       lat:23.7102,lng:90.4063},
+  {id:'mosque',   name:'Star Mosque Old Dhaka',             lat:23.7119,lng:90.4063},
+  {id:'mosque',   name:'Gulshan Aziz Mosque',               lat:23.7856,lng:90.4148},
+  {id:'fuel',     name:'Padma Oil Farmgate',                lat:23.7560,lng:90.3891},
+  {id:'fuel',     name:'Meghna Petro Dhanmondi',            lat:23.7428,lng:90.3760},
+  {id:'fuel',     name:'Jamuna Oil Mirpur',                 lat:23.8064,lng:90.3611},
+  {id:'fuel',     name:'RPG Station Uttara',                lat:23.8750,lng:90.3940},
+  {id:'pharmacy', name:'Lazz Pharma Farmgate',              lat:23.7575,lng:90.3904},
+  {id:'pharmacy', name:'Neon Pharmacy Dhanmondi',           lat:23.7477,lng:90.3759},
+  {id:'pharmacy', name:'Popular Pharmacy Motijheel',        lat:23.7334,lng:90.4231},
+  {id:'market',   name:'New Market Dhaka',                  lat:23.7337,lng:90.3847},
+  {id:'market',   name:'Karwan Bazar',                      lat:23.7536,lng:90.3935},
+  {id:'market',   name:'Bashundhara City Mall',             lat:23.7507,lng:90.3897},
+  {id:'market',   name:'Jamuna Future Park',                lat:23.8143,lng:90.4261},
+  {id:'busstop',  name:'Farmgate Bus Stop',                 lat:23.7574,lng:90.3892},
+  {id:'busstop',  name:'Gulistan Bus Terminal',             lat:23.7255,lng:90.4165},
+  {id:'busstop',  name:'Mohakhali Bus Terminal',            lat:23.7799,lng:90.4014},
+  {id:'busstop',  name:'Gabtali Bus Terminal',              lat:23.7645,lng:90.3435},
+  {id:'busstop',  name:'Sayedabad Bus Terminal',            lat:23.7163,lng:90.4313},
 ];
 
 function loadFallback() {
-  FALLBACK.forEach(({catId, name, lat, lng}) => {
-    const cat = CATS.find(c => c.id === catId);
-    if (!cat) return;
-    catData[catId].push({ name, lat, lng, tags: {} });
-    const marker = createMarker(cat, lat, lng, name, {});
-    layerGroups[catId].addLayer(marker);
+  FB.forEach(({id, name, lat, lng}) => {
+    const c = CATS.find(x => x.id === id); if (!c) return;
+    catData[id].push({name,lat,lng});
+    catLayers[id].addLayer(makeUtilMarker(c, lat, lng, name, {}));
   });
-  updateStats();
-  updateCounts();
-  showToast('⚠️ Using sample data — Overpass API unavailable');
+  updateCounts(); updateStats();
 }
 
-// ─────────────────────────────────────────────
-//  FILTER / TOGGLE
-// ─────────────────────────────────────────────
-function toggleCat(id) {
-  active[id] = !active[id];
-  const btn = document.getElementById('btn-' + id);
-  const lg  = layerGroups[id];
-  if (active[id]) {
-    lg.addTo(map);
-    btn.classList.add('active');
-  } else {
-    map.removeLayer(lg);
-    btn.classList.remove('active');
-  }
-  updateStats();
-}
-
-function toggleAll(on) {
-  CATS.forEach(c => {
-    active[c.id] = on;
-    const btn = document.getElementById('btn-' + c.id);
-    if (on) {
-      layerGroups[c.id].addTo(map);
-      btn.classList.add('active');
-    } else {
-      map.removeLayer(layerGroups[c.id]);
-      btn.classList.remove('active');
-    }
-  });
-  updateStats();
-}
-
-// ─────────────────────────────────────────────
-//  SEARCH
-// ─────────────────────────────────────────────
-document.getElementById('search-input').addEventListener('input', function() {
-  const q = this.value.toLowerCase().trim();
-  if (!q) {
-    CATS.forEach(c => {
-      layerGroups[c.id].eachLayer(m => m.setStyle({ radius: c.size, fillOpacity: 0.88 }));
-    });
-    return;
-  }
-  CATS.forEach(c => {
-    layerGroups[c.id].eachLayer(m => {
-      const popup = m.getPopup()?.getContent() || '';
-      const match = popup.toLowerCase().includes(q);
-      m.setStyle({ fillOpacity: match ? 1 : 0.12, radius: match ? c.size + 3 : c.size });
-    });
-  });
+// ═══════════════════════════════════════════════════════════════
+//  LANDMARKS
+// ═══════════════════════════════════════════════════════════════
+[
+  {name:'National Parliament', lat:23.7627, lng:90.3787, icon:'🏛️'},
+  {name:'Lalbagh Fort',        lat:23.7183, lng:90.3875, icon:'🏰'},
+  {name:'Ahsan Manzil',       lat:23.7090, lng:90.4095, icon:'🏯'},
+  {name:'Shaheed Minar',      lat:23.7240, lng:90.3950, icon:'🗽'},
+  {name:'National Museum',    lat:23.7348, lng:90.3968, icon:'🏛️'},
+  {name:'Hatirjheel Bridge',  lat:23.7537, lng:90.4162, icon:'🌉'},
+].forEach(lm => {
+  L.marker([lm.lat, lm.lng], {icon: L.divIcon({
+    className:'',
+    html:`<div style="font-size:1.15rem;filter:drop-shadow(0 2px 7px rgba(0,0,0,.9))">${lm.icon}</div>`,
+    iconSize:[24,24], iconAnchor:[12,12],
+  })}).addTo(map)
+    .bindPopup(`<div class="ph"><div class="pbadge" style="background:rgba(255,215,0,.12);color:#ffd700">🗺️ Landmark</div><div class="pname">${lm.name}</div><div class="psub">📍 Dhaka, Bangladesh</div></div>`, {className:'custom-popup'});
 });
 
-// ─────────────────────────────────────────────
-//  STATS + COUNTS
-// ─────────────────────────────────────────────
-function updateStats() {
-  let total = 0, visible = 0, cats = 0;
-  CATS.forEach(c => {
-    const n = catData[c.id].length;
-    total += n;
-    if (active[c.id]) { visible += n; cats++; }
-  });
-  animateNum('stat-total',   total);
-  animateNum('stat-visible', visible);
-  animateNum('stat-cats',    cats);
-}
-
-function updateCounts() {
-  CATS.forEach(c => {
-    const el = document.getElementById('cnt-' + c.id);
-    if (el) el.textContent = catData[c.id].length || '0';
-  });
-}
-
-function animateNum(id, target) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const start = parseInt(el.textContent) || 0;
-  const dur = 600, step = 16;
-  let t = 0;
-  const timer = setInterval(() => {
-    t += step;
-    el.textContent = Math.round(start + (target - start) * Math.min(t / dur, 1));
-    if (t >= dur) clearInterval(timer);
-  }, step);
-}
-
-// ─────────────────────────────────────────────
-//  SIDEBAR TOGGLE
-// ─────────────────────────────────────────────
-let sidebarOpen = true;
-function toggleSidebar() {
-  sidebarOpen = !sidebarOpen;
-  document.getElementById('sidebar').classList.toggle('collapsed', !sidebarOpen);
-  document.getElementById('topbar').classList.toggle('full', !sidebarOpen);
-}
-
-// ─────────────────────────────────────────────
-//  LEGEND TOGGLE
-// ─────────────────────────────────────────────
-function toggleLegend() {
-  document.getElementById('mini-legend').classList.toggle('show');
-}
-
-// ─────────────────────────────────────────────
-//  LOADING HELPERS
-// ─────────────────────────────────────────────
-function setProgress(pct, msg) {
-  document.getElementById('load-fill').style.width = pct + '%';
-  document.getElementById('load-status').textContent = msg;
-}
-function hideLoading() {
-  document.getElementById('loading').classList.add('hidden');
-  setTimeout(() => document.getElementById('loading').remove(), 500);
-}
-
-// ─────────────────────────────────────────────
-//  TOAST
-// ─────────────────────────────────────────────
-function showToast(msg, ms = 3500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), ms);
-}
-
-// ─────────────────────────────────────────────
-//  ONLINE / OFFLINE INDICATOR
-// ─────────────────────────────────────────────
-function updateOnline() {
-  const online = navigator.onLine;
-  document.getElementById('status-dot').className = 'status-dot' + (online ? '' : ' offline');
-  document.getElementById('status-lbl').textContent = online ? 'Online' : 'Offline';
-}
-window.addEventListener('online',  updateOnline);
-window.addEventListener('offline', updateOnline);
-updateOnline();
-
-// ─────────────────────────────────────────────
-//  DHAKA CITY BOUNDARY HIGHLIGHT
-// ─────────────────────────────────────────────
-// Approximate Dhaka city circle overlay
-L.circle(DHAKA, {
-  radius: 14000,
-  fillColor: 'rgba(56,189,248,0.03)',
-  fillOpacity: 1,
-  color: 'rgba(56,189,248,0.2)',
-  weight: 1,
-  dashArray: '6 4',
-}).addTo(map);
-
-// City center marker
-L.marker(DHAKA, {
-  icon: L.divIcon({
-    className: '',
-    html: `<div style="
-      width:12px;height:12px;border-radius:50%;
-      background:#38bdf8;
-      border:3px solid rgba(255,255,255,.7);
-      box-shadow:0 0 0 6px rgba(56,189,248,.2), 0 0 20px #38bdf8;
-    "></div>`,
-    iconSize: [12,12], iconAnchor: [6,6]
-  })
-}).addTo(map).bindPopup('<b>🏙️ Dhaka City Centre</b><br/>Motijheel Area', { className: 'custom-popup' });
-
-// ─────────────────────────────────────────────
-//  NOTABLE LANDMARKS (always-on)
-// ─────────────────────────────────────────────
-const LANDMARKS = [
-  { name:'National Parliament House',  lat:23.7627, lng:90.3787, icon:'🏛️' },
-  { name:'Lalbagh Fort',               lat:23.7183, lng:90.3875, icon:'🏰' },
-  { name:'Ahsan Manzil (Pink Palace)', lat:23.7090, lng:90.4095, icon:'🏯' },
-  { name:'Shaheed Minar',             lat:23.7240, lng:90.3950, icon:'🗽' },
-  { name:'National Museum Dhaka',      lat:23.7348, lng:90.3968, icon:'🏛️' },
-  { name:'Hatirjheel Bridge',          lat:23.7537, lng:90.4162, icon:'🌉' },
-];
-
-const landmarkGroup = L.layerGroup().addTo(map);
-LANDMARKS.forEach(lm => {
-  L.marker([lm.lat, lm.lng], {
-    icon: L.divIcon({
-      className: '',
-      html: `<div style="font-size:1.2rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))">${lm.icon}</div>`,
-      iconSize: [24,24], iconAnchor: [12,12]
-    })
-  }).addTo(landmarkGroup)
-    .bindPopup(`<div class="popup-inner">
-      <div class="popup-type-badge" style="background:rgba(255,215,0,.12);color:#ffd700">🗺️ Landmark</div>
-      <div class="popup-name">${lm.name}</div>
-      <div class="popup-detail">📍 Dhaka, Bangladesh</div>
-    </div>`, { className: 'custom-popup' });
-});
-
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
 //  INIT
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
 renderSidebar();
 renderLegend();
+placeAllUserMarkers();
 fetchData();
 
-// Responsive: close sidebar on mobile by default
+// Initial Voronoi after map is ready
+map.whenReady(() => setTimeout(recomputeVoronoi, 400));
+
+// Mobile: start with sidebar closed
 if (window.innerWidth < 700) {
-  sidebarOpen = false;
-  document.getElementById('sidebar').classList.add('collapsed');
-  document.getElementById('topbar').classList.add('full');
+  sbOpen = false;
+  document.getElementById('sb').classList.add('closed');
+  document.getElementById('tb').classList.add('full');
 }
 </script>
 </body>
